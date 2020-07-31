@@ -1525,19 +1525,7 @@ module.exports = function (it) {
 
 },{"../../modules/web.dom-collections.iterator":"../node_modules/core-js-pure/modules/web.dom-collections.iterator.js","../array/virtual/for-each":"../node_modules/core-js-pure/stable/array/virtual/for-each.js","../../internals/classof":"../node_modules/core-js-pure/internals/classof.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js":[function(require,module,exports) {
 module.exports = require("core-js-pure/stable/instance/for-each");
-},{"core-js-pure/stable/instance/for-each":"../node_modules/core-js-pure/stable/instance/for-each.js"}],"../node_modules/core-js-pure/internals/create-property.js":[function(require,module,exports) {
-'use strict';
-var toPrimitive = require('../internals/to-primitive');
-var definePropertyModule = require('../internals/object-define-property');
-var createPropertyDescriptor = require('../internals/create-property-descriptor');
-
-module.exports = function (object, key, value) {
-  var propertyKey = toPrimitive(key);
-  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
-  else object[propertyKey] = value;
-};
-
-},{"../internals/to-primitive":"../node_modules/core-js-pure/internals/to-primitive.js","../internals/object-define-property":"../node_modules/core-js-pure/internals/object-define-property.js","../internals/create-property-descriptor":"../node_modules/core-js-pure/internals/create-property-descriptor.js"}],"../node_modules/core-js-pure/internals/engine-user-agent.js":[function(require,module,exports) {
+},{"core-js-pure/stable/instance/for-each":"../node_modules/core-js-pure/stable/instance/for-each.js"}],"../node_modules/core-js-pure/internals/engine-user-agent.js":[function(require,module,exports) {
 var getBuiltIn = require('../internals/get-built-in');
 
 module.exports = getBuiltIn('navigator', 'userAgent') || '';
@@ -1587,7 +1575,188 @@ module.exports = function (METHOD_NAME) {
   });
 };
 
-},{"../internals/fails":"../node_modules/core-js-pure/internals/fails.js","../internals/well-known-symbol":"../node_modules/core-js-pure/internals/well-known-symbol.js","../internals/engine-v8-version":"../node_modules/core-js-pure/internals/engine-v8-version.js"}],"../node_modules/core-js-pure/modules/es.array.concat.js":[function(require,module,exports) {
+},{"../internals/fails":"../node_modules/core-js-pure/internals/fails.js","../internals/well-known-symbol":"../node_modules/core-js-pure/internals/well-known-symbol.js","../internals/engine-v8-version":"../node_modules/core-js-pure/internals/engine-v8-version.js"}],"../node_modules/core-js-pure/modules/es.array.filter.js":[function(require,module,exports) {
+'use strict';
+var $ = require('../internals/export');
+var $filter = require('../internals/array-iteration').filter;
+var arrayMethodHasSpeciesSupport = require('../internals/array-method-has-species-support');
+var arrayMethodUsesToLength = require('../internals/array-method-uses-to-length');
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('filter');
+// Edge 14- issue
+var USES_TO_LENGTH = arrayMethodUsesToLength('filter');
+
+// `Array.prototype.filter` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+  filter: function filter(callbackfn /* , thisArg */) {
+    return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+},{"../internals/export":"../node_modules/core-js-pure/internals/export.js","../internals/array-iteration":"../node_modules/core-js-pure/internals/array-iteration.js","../internals/array-method-has-species-support":"../node_modules/core-js-pure/internals/array-method-has-species-support.js","../internals/array-method-uses-to-length":"../node_modules/core-js-pure/internals/array-method-uses-to-length.js"}],"../node_modules/core-js-pure/es/array/virtual/filter.js":[function(require,module,exports) {
+require('../../../modules/es.array.filter');
+var entryVirtual = require('../../../internals/entry-virtual');
+
+module.exports = entryVirtual('Array').filter;
+
+},{"../../../modules/es.array.filter":"../node_modules/core-js-pure/modules/es.array.filter.js","../../../internals/entry-virtual":"../node_modules/core-js-pure/internals/entry-virtual.js"}],"../node_modules/core-js-pure/es/instance/filter.js":[function(require,module,exports) {
+var filter = require('../array/virtual/filter');
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.filter;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.filter) ? filter : own;
+};
+
+},{"../array/virtual/filter":"../node_modules/core-js-pure/es/array/virtual/filter.js"}],"../node_modules/core-js-pure/stable/instance/filter.js":[function(require,module,exports) {
+var parent = require('../../es/instance/filter');
+
+module.exports = parent;
+
+},{"../../es/instance/filter":"../node_modules/core-js-pure/es/instance/filter.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js":[function(require,module,exports) {
+module.exports = require("core-js-pure/stable/instance/filter");
+},{"core-js-pure/stable/instance/filter":"../node_modules/core-js-pure/stable/instance/filter.js"}],"../node_modules/core-js-pure/internals/array-reduce.js":[function(require,module,exports) {
+var aFunction = require('../internals/a-function');
+var toObject = require('../internals/to-object');
+var IndexedObject = require('../internals/indexed-object');
+var toLength = require('../internals/to-length');
+
+// `Array.prototype.{ reduce, reduceRight }` methods implementation
+var createMethod = function (IS_RIGHT) {
+  return function (that, callbackfn, argumentsLength, memo) {
+    aFunction(callbackfn);
+    var O = toObject(that);
+    var self = IndexedObject(O);
+    var length = toLength(O.length);
+    var index = IS_RIGHT ? length - 1 : 0;
+    var i = IS_RIGHT ? -1 : 1;
+    if (argumentsLength < 2) while (true) {
+      if (index in self) {
+        memo = self[index];
+        index += i;
+        break;
+      }
+      index += i;
+      if (IS_RIGHT ? index < 0 : length <= index) {
+        throw TypeError('Reduce of empty array with no initial value');
+      }
+    }
+    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+      memo = callbackfn(memo, self[index], index, O);
+    }
+    return memo;
+  };
+};
+
+module.exports = {
+  // `Array.prototype.reduce` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+  left: createMethod(false),
+  // `Array.prototype.reduceRight` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+  right: createMethod(true)
+};
+
+},{"../internals/a-function":"../node_modules/core-js-pure/internals/a-function.js","../internals/to-object":"../node_modules/core-js-pure/internals/to-object.js","../internals/indexed-object":"../node_modules/core-js-pure/internals/indexed-object.js","../internals/to-length":"../node_modules/core-js-pure/internals/to-length.js"}],"../node_modules/core-js-pure/modules/es.array.reduce.js":[function(require,module,exports) {
+'use strict';
+var $ = require('../internals/export');
+var $reduce = require('../internals/array-reduce').left;
+var arrayMethodIsStrict = require('../internals/array-method-is-strict');
+var arrayMethodUsesToLength = require('../internals/array-method-uses-to-length');
+
+var STRICT_METHOD = arrayMethodIsStrict('reduce');
+var USES_TO_LENGTH = arrayMethodUsesToLength('reduce', { 1: 0 });
+
+// `Array.prototype.reduce` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+$({ target: 'Array', proto: true, forced: !STRICT_METHOD || !USES_TO_LENGTH }, {
+  reduce: function reduce(callbackfn /* , initialValue */) {
+    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+},{"../internals/export":"../node_modules/core-js-pure/internals/export.js","../internals/array-reduce":"../node_modules/core-js-pure/internals/array-reduce.js","../internals/array-method-is-strict":"../node_modules/core-js-pure/internals/array-method-is-strict.js","../internals/array-method-uses-to-length":"../node_modules/core-js-pure/internals/array-method-uses-to-length.js"}],"../node_modules/core-js-pure/es/array/virtual/reduce.js":[function(require,module,exports) {
+require('../../../modules/es.array.reduce');
+var entryVirtual = require('../../../internals/entry-virtual');
+
+module.exports = entryVirtual('Array').reduce;
+
+},{"../../../modules/es.array.reduce":"../node_modules/core-js-pure/modules/es.array.reduce.js","../../../internals/entry-virtual":"../node_modules/core-js-pure/internals/entry-virtual.js"}],"../node_modules/core-js-pure/es/instance/reduce.js":[function(require,module,exports) {
+var reduce = require('../array/virtual/reduce');
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.reduce;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.reduce) ? reduce : own;
+};
+
+},{"../array/virtual/reduce":"../node_modules/core-js-pure/es/array/virtual/reduce.js"}],"../node_modules/core-js-pure/stable/instance/reduce.js":[function(require,module,exports) {
+var parent = require('../../es/instance/reduce');
+
+module.exports = parent;
+
+},{"../../es/instance/reduce":"../node_modules/core-js-pure/es/instance/reduce.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js":[function(require,module,exports) {
+module.exports = require("core-js-pure/stable/instance/reduce");
+},{"core-js-pure/stable/instance/reduce":"../node_modules/core-js-pure/stable/instance/reduce.js"}],"../node_modules/core-js-pure/modules/es.array.map.js":[function(require,module,exports) {
+'use strict';
+var $ = require('../internals/export');
+var $map = require('../internals/array-iteration').map;
+var arrayMethodHasSpeciesSupport = require('../internals/array-method-has-species-support');
+var arrayMethodUsesToLength = require('../internals/array-method-uses-to-length');
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('map');
+// FF49- issue
+var USES_TO_LENGTH = arrayMethodUsesToLength('map');
+
+// `Array.prototype.map` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.map
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+  map: function map(callbackfn /* , thisArg */) {
+    return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+},{"../internals/export":"../node_modules/core-js-pure/internals/export.js","../internals/array-iteration":"../node_modules/core-js-pure/internals/array-iteration.js","../internals/array-method-has-species-support":"../node_modules/core-js-pure/internals/array-method-has-species-support.js","../internals/array-method-uses-to-length":"../node_modules/core-js-pure/internals/array-method-uses-to-length.js"}],"../node_modules/core-js-pure/es/array/virtual/map.js":[function(require,module,exports) {
+require('../../../modules/es.array.map');
+var entryVirtual = require('../../../internals/entry-virtual');
+
+module.exports = entryVirtual('Array').map;
+
+},{"../../../modules/es.array.map":"../node_modules/core-js-pure/modules/es.array.map.js","../../../internals/entry-virtual":"../node_modules/core-js-pure/internals/entry-virtual.js"}],"../node_modules/core-js-pure/es/instance/map.js":[function(require,module,exports) {
+var map = require('../array/virtual/map');
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.map;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.map) ? map : own;
+};
+
+},{"../array/virtual/map":"../node_modules/core-js-pure/es/array/virtual/map.js"}],"../node_modules/core-js-pure/stable/instance/map.js":[function(require,module,exports) {
+var parent = require('../../es/instance/map');
+
+module.exports = parent;
+
+},{"../../es/instance/map":"../node_modules/core-js-pure/es/instance/map.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js":[function(require,module,exports) {
+module.exports = require("core-js-pure/stable/instance/map");
+},{"core-js-pure/stable/instance/map":"../node_modules/core-js-pure/stable/instance/map.js"}],"../node_modules/core-js-pure/internals/create-property.js":[function(require,module,exports) {
+'use strict';
+var toPrimitive = require('../internals/to-primitive');
+var definePropertyModule = require('../internals/object-define-property');
+var createPropertyDescriptor = require('../internals/create-property-descriptor');
+
+module.exports = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
+};
+
+},{"../internals/to-primitive":"../node_modules/core-js-pure/internals/to-primitive.js","../internals/object-define-property":"../node_modules/core-js-pure/internals/object-define-property.js","../internals/create-property-descriptor":"../node_modules/core-js-pure/internals/create-property-descriptor.js"}],"../node_modules/core-js-pure/modules/es.array.concat.js":[function(require,module,exports) {
 'use strict';
 var $ = require('../internals/export');
 var fails = require('../internals/fails');
@@ -1749,6 +1918,12 @@ module.hot.accept(reloadCSS);
 
 var _forEach = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/for-each"));
 
+var _filter = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/filter"));
+
+var _reduce = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/reduce"));
+
+var _map = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/map"));
+
 var _concat = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/concat"));
 
 require("./scss/main.scss");
@@ -1791,16 +1966,47 @@ function addTransactionDOM(transaction) {
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
   item.innerHTML = (0, _concat.default)(_context = (0, _concat.default)(_context2 = "\n        ".concat(transaction.text, " <span>")).call(_context2, sign)).call(_context, Math.abs(transaction.amount), "</span>\n        <button class=\"delete-btn\">x</button>\n    ");
   list.appendChild(item);
+} // Update the balance income and expense
+
+
+function updateValues() {
+  var _context3, _context4;
+
+  var amounts = (0, _map.default)(transactions).call(transactions, function (transaction) {
+    return transaction.amount;
+  });
+  var total = (0, _reduce.default)(amounts).call(amounts, function (acc, item) {
+    return acc += item;
+  }, 0).toFixed(2); //   console.log(amounts);
+  //   console.log(total);
+
+  var income = (0, _reduce.default)(_context3 = (0, _filter.default)(amounts).call(amounts, function (item) {
+    return item > 0;
+  })).call(_context3, function (acc, item) {
+    return acc += item;
+  }, 0).toFixed(2); //   console.log(income);
+
+  var expense = ((0, _reduce.default)(_context4 = (0, _filter.default)(amounts).call(amounts, function (item) {
+    return item < 0;
+  })).call(_context4, function (acc, item) {
+    return acc += item;
+  }, 0) * -1).toFixed(2); //   console.log(expense);
+
+  balance.innerHTML = "$".concat(total);
+  money_plus.innerHTML = "$".concat(income);
+  money_minus.innerHTML = "$".concat(expense);
 } // Init app
 
 
 function init() {
   list.innerHTML = "";
-  (0, _forEach.default)(transactions).call(transactions, addTransactionDOM);
+  (0, _forEach.default)(transactions).call(transactions, addTransactionDOM); //addTrascationDOM(transaction)
+
+  updateValues();
 }
 
 init();
-},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/instance/filter":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js","@babel/runtime-corejs3/core-js-stable/instance/reduce":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js","@babel/runtime-corejs3/core-js-stable/instance/map":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
