@@ -1,0 +1,26 @@
+{
+  "name": "expense-tracker",
+  "version": "1.0.0",
+  "description": "\"# 9.Expense-Tracker\"",
+  "main": "index.js",
+  "scripts": {
+    "dev": "parcel public/index.html --out-dir development -p 3000",
+    "build": "parcel build public/index.html --out-dir dist --public-url ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/girwarkishor/9.Expense-Tracker.git"
+  },
+  "author": "Girwar Kishor",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/girwarkishor/9.Expense-Tracker/issues"
+  },
+  "homepage": "https://github.com/girwarkishor/9.Expense-Tracker#readme",
+  "dependencies": {
+    "@babel/core": "^7.11.0",
+    "@babel/plugin-transform-runtime": "^7.11.0",
+    "@babel/runtime-corejs3": "^7.11.0",
+    "sass": "^1.26.10"
+  }
+}
