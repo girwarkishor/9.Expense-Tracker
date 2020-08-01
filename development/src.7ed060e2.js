@@ -1525,7 +1525,59 @@ module.exports = function (it) {
 
 },{"../../modules/web.dom-collections.iterator":"../node_modules/core-js-pure/modules/web.dom-collections.iterator.js","../array/virtual/for-each":"../node_modules/core-js-pure/stable/array/virtual/for-each.js","../../internals/classof":"../node_modules/core-js-pure/internals/classof.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js":[function(require,module,exports) {
 module.exports = require("core-js-pure/stable/instance/for-each");
-},{"core-js-pure/stable/instance/for-each":"../node_modules/core-js-pure/stable/instance/for-each.js"}],"../node_modules/core-js-pure/internals/engine-user-agent.js":[function(require,module,exports) {
+},{"core-js-pure/stable/instance/for-each":"../node_modules/core-js-pure/stable/instance/for-each.js"}],"../node_modules/core-js-pure/modules/es.json.stringify.js":[function(require,module,exports) {
+var $ = require('../internals/export');
+var getBuiltIn = require('../internals/get-built-in');
+var fails = require('../internals/fails');
+
+var $stringify = getBuiltIn('JSON', 'stringify');
+var re = /[\uD800-\uDFFF]/g;
+var low = /^[\uD800-\uDBFF]$/;
+var hi = /^[\uDC00-\uDFFF]$/;
+
+var fix = function (match, offset, string) {
+  var prev = string.charAt(offset - 1);
+  var next = string.charAt(offset + 1);
+  if ((low.test(match) && !hi.test(next)) || (hi.test(match) && !low.test(prev))) {
+    return '\\u' + match.charCodeAt(0).toString(16);
+  } return match;
+};
+
+var FORCED = fails(function () {
+  return $stringify('\uDF06\uD834') !== '"\\udf06\\ud834"'
+    || $stringify('\uDEAD') !== '"\\udead"';
+});
+
+if ($stringify) {
+  // https://github.com/tc39/proposal-well-formed-stringify
+  $({ target: 'JSON', stat: true, forced: FORCED }, {
+    // eslint-disable-next-line no-unused-vars
+    stringify: function stringify(it, replacer, space) {
+      var result = $stringify.apply(null, arguments);
+      return typeof result == 'string' ? result.replace(re, fix) : result;
+    }
+  });
+}
+
+},{"../internals/export":"../node_modules/core-js-pure/internals/export.js","../internals/get-built-in":"../node_modules/core-js-pure/internals/get-built-in.js","../internals/fails":"../node_modules/core-js-pure/internals/fails.js"}],"../node_modules/core-js-pure/es/json/stringify.js":[function(require,module,exports) {
+require('../../modules/es.json.stringify');
+var core = require('../../internals/path');
+
+if (!core.JSON) core.JSON = { stringify: JSON.stringify };
+
+// eslint-disable-next-line no-unused-vars
+module.exports = function stringify(it, replacer, space) {
+  return core.JSON.stringify.apply(null, arguments);
+};
+
+},{"../../modules/es.json.stringify":"../node_modules/core-js-pure/modules/es.json.stringify.js","../../internals/path":"../node_modules/core-js-pure/internals/path.js"}],"../node_modules/core-js-pure/stable/json/stringify.js":[function(require,module,exports) {
+var parent = require('../../es/json/stringify');
+
+module.exports = parent;
+
+},{"../../es/json/stringify":"../node_modules/core-js-pure/es/json/stringify.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/json/stringify.js":[function(require,module,exports) {
+module.exports = require("core-js-pure/stable/json/stringify");
+},{"core-js-pure/stable/json/stringify":"../node_modules/core-js-pure/stable/json/stringify.js"}],"../node_modules/core-js-pure/internals/engine-user-agent.js":[function(require,module,exports) {
 var getBuiltIn = require('../internals/get-built-in');
 
 module.exports = getBuiltIn('navigator', 'userAgent') || '';
@@ -2005,6 +2057,8 @@ module.hot.accept(reloadCSS);
 
 var _forEach = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/for-each"));
 
+var _stringify = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/json/stringify"));
+
 var _filter = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/filter"));
 
 var _reduce = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/reduce"));
@@ -2025,25 +2079,16 @@ var money_minus = document.getElementById("money-minus");
 var list = document.getElementById("list");
 var form = document.getElementById("form");
 var text = document.getElementById("text");
-var amount = document.getElementById("amount");
-var dummyTransactions = [{
-  id: 1,
-  text: "Flower",
-  amount: -20
-}, {
-  id: 2,
-  text: "Salary",
-  amount: 300
-}, {
-  id: 3,
-  text: "Book",
-  amount: -10
-}, {
-  id: 4,
-  text: "Camera",
-  amount: 150
-}];
-var transactions = dummyTransactions; // Add transaction
+var amount = document.getElementById("amount"); // const dummyTransactions = [
+//   { id: 1, text: "Flower", amount: -20 },
+//   { id: 2, text: "Salary", amount: 300 },
+//   { id: 3, text: "Book", amount: -10 },
+//   { id: 4, text: "Camera", amount: 150 },
+// ];
+
+var localStorageTransactions = JSON.parse(localStorage.getItem("transactions")); // let transactions = dummyTransactions;
+
+var transactions = localStorage.getItem("transactions") !== null ? localStorageTransactions : []; // Add transaction
 
 function addTransaction(e) {
   var _context, _context2;
@@ -2062,6 +2107,7 @@ function addTransaction(e) {
     transactions.push(transaction);
     addTransactionDOM(transaction);
     updateValues();
+    updateLocalStorage();
     text.value = "";
     amount.value = "";
   }
@@ -2119,8 +2165,14 @@ window.removeTransaction = function removeTransaction(id) {
   transactions = (0, _filter.default)(transactions).call(transactions, function (transaction) {
     return transaction.id !== id;
   });
+  updateLocalStorage();
   init();
-}; // Init app
+}; // Update local storage transactions
+
+
+function updateLocalStorage() {
+  localStorage.setItem("transactions", (0, _stringify.default)(transactions));
+} // Init app
 
 
 function init() {
@@ -2132,7 +2184,7 @@ function init() {
 
 init();
 form.addEventListener("submit", addTransaction);
-},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/instance/filter":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js","@babel/runtime-corejs3/core-js-stable/instance/reduce":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js","@babel/runtime-corejs3/core-js-stable/instance/map":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","@babel/runtime-corejs3/core-js-stable/instance/trim":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/trim.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/json/stringify":"../node_modules/@babel/runtime-corejs3/core-js-stable/json/stringify.js","@babel/runtime-corejs3/core-js-stable/instance/filter":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js","@babel/runtime-corejs3/core-js-stable/instance/reduce":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js","@babel/runtime-corejs3/core-js-stable/instance/map":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","@babel/runtime-corejs3/core-js-stable/instance/trim":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/trim.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
