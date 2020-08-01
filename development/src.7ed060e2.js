@@ -1841,7 +1841,94 @@ module.exports = parent;
 
 },{"../../es/instance/concat":"../node_modules/core-js-pure/es/instance/concat.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js":[function(require,module,exports) {
 module.exports = require("core-js-pure/stable/instance/concat");
-},{"core-js-pure/stable/instance/concat":"../node_modules/core-js-pure/stable/instance/concat.js"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"core-js-pure/stable/instance/concat":"../node_modules/core-js-pure/stable/instance/concat.js"}],"../node_modules/core-js-pure/internals/whitespaces.js":[function(require,module,exports) {
+// a string of all valid unicode whitespaces
+// eslint-disable-next-line max-len
+module.exports = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
+
+},{}],"../node_modules/core-js-pure/internals/string-trim.js":[function(require,module,exports) {
+var requireObjectCoercible = require('../internals/require-object-coercible');
+var whitespaces = require('../internals/whitespaces');
+
+var whitespace = '[' + whitespaces + ']';
+var ltrim = RegExp('^' + whitespace + whitespace + '*');
+var rtrim = RegExp(whitespace + whitespace + '*$');
+
+// `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
+var createMethod = function (TYPE) {
+  return function ($this) {
+    var string = String(requireObjectCoercible($this));
+    if (TYPE & 1) string = string.replace(ltrim, '');
+    if (TYPE & 2) string = string.replace(rtrim, '');
+    return string;
+  };
+};
+
+module.exports = {
+  // `String.prototype.{ trimLeft, trimStart }` methods
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+  start: createMethod(1),
+  // `String.prototype.{ trimRight, trimEnd }` methods
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+  end: createMethod(2),
+  // `String.prototype.trim` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+  trim: createMethod(3)
+};
+
+},{"../internals/require-object-coercible":"../node_modules/core-js-pure/internals/require-object-coercible.js","../internals/whitespaces":"../node_modules/core-js-pure/internals/whitespaces.js"}],"../node_modules/core-js-pure/internals/string-trim-forced.js":[function(require,module,exports) {
+var fails = require('../internals/fails');
+var whitespaces = require('../internals/whitespaces');
+
+var non = '\u200B\u0085\u180E';
+
+// check that a method works with the correct list
+// of whitespaces and has a correct name
+module.exports = function (METHOD_NAME) {
+  return fails(function () {
+    return !!whitespaces[METHOD_NAME]() || non[METHOD_NAME]() != non || whitespaces[METHOD_NAME].name !== METHOD_NAME;
+  });
+};
+
+},{"../internals/fails":"../node_modules/core-js-pure/internals/fails.js","../internals/whitespaces":"../node_modules/core-js-pure/internals/whitespaces.js"}],"../node_modules/core-js-pure/modules/es.string.trim.js":[function(require,module,exports) {
+'use strict';
+var $ = require('../internals/export');
+var $trim = require('../internals/string-trim').trim;
+var forcedStringTrimMethod = require('../internals/string-trim-forced');
+
+// `String.prototype.trim` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.trim
+$({ target: 'String', proto: true, forced: forcedStringTrimMethod('trim') }, {
+  trim: function trim() {
+    return $trim(this);
+  }
+});
+
+},{"../internals/export":"../node_modules/core-js-pure/internals/export.js","../internals/string-trim":"../node_modules/core-js-pure/internals/string-trim.js","../internals/string-trim-forced":"../node_modules/core-js-pure/internals/string-trim-forced.js"}],"../node_modules/core-js-pure/es/string/virtual/trim.js":[function(require,module,exports) {
+require('../../../modules/es.string.trim');
+var entryVirtual = require('../../../internals/entry-virtual');
+
+module.exports = entryVirtual('String').trim;
+
+},{"../../../modules/es.string.trim":"../node_modules/core-js-pure/modules/es.string.trim.js","../../../internals/entry-virtual":"../node_modules/core-js-pure/internals/entry-virtual.js"}],"../node_modules/core-js-pure/es/instance/trim.js":[function(require,module,exports) {
+var trim = require('../string/virtual/trim');
+
+var StringPrototype = String.prototype;
+
+module.exports = function (it) {
+  var own = it.trim;
+  return typeof it === 'string' || it === StringPrototype
+    || (it instanceof String && own === StringPrototype.trim) ? trim : own;
+};
+
+},{"../string/virtual/trim":"../node_modules/core-js-pure/es/string/virtual/trim.js"}],"../node_modules/core-js-pure/stable/instance/trim.js":[function(require,module,exports) {
+var parent = require('../../es/instance/trim');
+
+module.exports = parent;
+
+},{"../../es/instance/trim":"../node_modules/core-js-pure/es/instance/trim.js"}],"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/trim.js":[function(require,module,exports) {
+module.exports = require("core-js-pure/stable/instance/trim");
+},{"core-js-pure/stable/instance/trim":"../node_modules/core-js-pure/stable/instance/trim.js"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -1926,6 +2013,8 @@ var _map = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable
 
 var _concat = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/concat"));
 
+var _trim = _interopRequireDefault(require("@babel/runtime-corejs3/core-js-stable/instance/trim"));
+
 require("./scss/main.scss");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -1954,23 +2043,51 @@ var dummyTransactions = [{
   text: "Camera",
   amount: 150
 }];
-var transactions = dummyTransactions; // Add transactions to DOM list
+var transactions = dummyTransactions; // Add transaction
+
+function addTransaction(e) {
+  var _context, _context2;
+
+  e.preventDefault();
+
+  if ((0, _trim.default)(_context = text.value).call(_context) === "" || (0, _trim.default)(_context2 = amount.value).call(_context2) === "") {
+    alert("Please add a text and amount");
+  } else {
+    var transaction = {
+      id: generateID(),
+      text: text.value,
+      amount: +amount.value
+    }; // console.log(transaction);
+
+    transactions.push(transaction);
+    addTransactionDOM(transaction);
+    updateValues();
+    text.value = "";
+    amount.value = "";
+  }
+} // Generate random ID
+
+
+function generateID() {
+  return Math.floor(Math.random() * 10000000);
+} // Add transactions to DOM list
+
 
 function addTransactionDOM(transaction) {
-  var _context, _context2;
+  var _context3, _context4, _context5;
 
   // Get sign
   var sign = transaction.amount < 0 ? "-" : "+";
   var item = document.createElement("li"); // Add class based on value
 
   item.classList.add(transaction.amount < 0 ? "minus" : "plus");
-  item.innerHTML = (0, _concat.default)(_context = (0, _concat.default)(_context2 = "\n        ".concat(transaction.text, " <span>")).call(_context2, sign)).call(_context, Math.abs(transaction.amount), "</span>\n        <button class=\"delete-btn\">x</button>\n    ");
+  item.innerHTML = (0, _concat.default)(_context3 = (0, _concat.default)(_context4 = (0, _concat.default)(_context5 = "\n    ".concat(transaction.text, " <span>")).call(_context5, sign)).call(_context4, Math.abs(transaction.amount), "</span> <button class=\"delete-btn\" id=\"delete-btn\" onclick=\"removeTransaction(")).call(_context3, transaction.id, ")\">x</button>\n  ");
   list.appendChild(item);
 } // Update the balance income and expense
 
 
 function updateValues() {
-  var _context3, _context4;
+  var _context6, _context7;
 
   var amounts = (0, _map.default)(transactions).call(transactions, function (transaction) {
     return transaction.amount;
@@ -1980,22 +2097,30 @@ function updateValues() {
   }, 0).toFixed(2); //   console.log(amounts);
   //   console.log(total);
 
-  var income = (0, _reduce.default)(_context3 = (0, _filter.default)(amounts).call(amounts, function (item) {
+  var income = (0, _reduce.default)(_context6 = (0, _filter.default)(amounts).call(amounts, function (item) {
     return item > 0;
-  })).call(_context3, function (acc, item) {
+  })).call(_context6, function (acc, item) {
     return acc += item;
   }, 0).toFixed(2); //   console.log(income);
 
-  var expense = ((0, _reduce.default)(_context4 = (0, _filter.default)(amounts).call(amounts, function (item) {
+  var expense = ((0, _reduce.default)(_context7 = (0, _filter.default)(amounts).call(amounts, function (item) {
     return item < 0;
-  })).call(_context4, function (acc, item) {
+  })).call(_context7, function (acc, item) {
     return acc += item;
   }, 0) * -1).toFixed(2); //   console.log(expense);
 
   balance.innerHTML = "$".concat(total);
   money_plus.innerHTML = "$".concat(income);
   money_minus.innerHTML = "$".concat(expense);
-} // Init app
+} // Remove transaction by ID
+
+
+window.removeTransaction = function removeTransaction(id) {
+  transactions = (0, _filter.default)(transactions).call(transactions, function (transaction) {
+    return transaction.id !== id;
+  });
+  init();
+}; // Init app
 
 
 function init() {
@@ -2006,7 +2131,8 @@ function init() {
 }
 
 init();
-},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/instance/filter":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js","@babel/runtime-corejs3/core-js-stable/instance/reduce":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js","@babel/runtime-corejs3/core-js-stable/instance/map":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+form.addEventListener("submit", addTransaction);
+},{"@babel/runtime-corejs3/core-js-stable/instance/for-each":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js","@babel/runtime-corejs3/core-js-stable/instance/filter":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/filter.js","@babel/runtime-corejs3/core-js-stable/instance/reduce":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/reduce.js","@babel/runtime-corejs3/core-js-stable/instance/map":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/map.js","@babel/runtime-corejs3/core-js-stable/instance/concat":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js","@babel/runtime-corejs3/core-js-stable/instance/trim":"../node_modules/@babel/runtime-corejs3/core-js-stable/instance/trim.js","./scss/main.scss":"../src/scss/main.scss"}],"C:/Users/girwa/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -2034,7 +2160,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61659" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52042" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
